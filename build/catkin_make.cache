@@ -1,2 +1,0 @@
-mie443_contest1
--DCATKIN_DEVEL_PREFIX=/mnt/c/Users/hmnik/Documents/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/mnt/c/Users/hmnik/Documents/catkin_ws/install -G Unix Makefiles
