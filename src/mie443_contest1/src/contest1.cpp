@@ -61,6 +61,17 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	//ROS_INFO(“Size of laser scan array: %i and size of offset: %i”, laserSize, laserOffset);
 }
 
+void bumperHit(){
+	if (abs(yaw - angleAtHit) < pi/2){
+		angular = pi/6;
+		linear = 0.0;
+	} else {
+		bumperCenter = 0;
+		bumperLeft = 0;
+		bumperRight = 0;
+	}
+}
+
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	posX = msg->pose.pose.position.x;
 	posY = msg->pose.pose.position.y;
@@ -97,15 +108,19 @@ int main(int argc, char **argv)
 		//...................................
 		ROS_INFO("Position: (%f, %f) Orientation: %f degrees Range: %f", posX, posY, yaw*180/pi, laserRange);
 
-		if (posX < 0.5 && yaw < pi/12 && !bumperRight && !bumperCenter && !bumperLeft && laserRange > 0.7){
+		
+
+		if (bumperCenter == 1 || bumperLeft == 1 || bumperRight == 1){
+			bumperHit();
+		} else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
 			angular = 0.0;
 			linear = 0.2;
 		}
-		else if (posX > 0.5 && yaw < pi/2 && !bumperRight && !bumperCenter && !bumperLeft && laserRange > 0.5){
+		else if (posX > 0.5 && yaw < pi/2 && laserRange > 0.5){
 			angular = pi/6;
 			linear = 0.0;
 		} 
-		else if (laserRange > 1.0 && !bumperRight && !bumperCenter && !bumperLeft){
+		else if (laserRange > 1.0){
 			if(yaw < 17*pi/36 || posX > 0.6)
 			{
 				angular = pi/12;
