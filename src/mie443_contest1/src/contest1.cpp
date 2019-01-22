@@ -16,7 +16,7 @@
 using namespace std;
 
 double angular, linear;
-double posX, posY, yaw;
+double posX, posY, yaw, angleAtHit;
 double pi = 3.1416;
 bool bumperLeft = 0, bumperCenter = 0, bumperRight = 0;
 
@@ -27,12 +27,15 @@ int laserSize=0, laserOffset=0, desiredAngle=5;
 void bumperCallback(const kobuki_msgs::BumperEvent msg){
 	if (msg.bumper == 0){
 		bumperLeft = 1;
+		angleAtHit = yaw;
 	}
 	else if (msg.bumper == 1){
 		bumperCenter = 1;
+		angleAtHit = yaw;
 	} 
 	else if (msg.bumper == 2){
 		bumperRight = 1;
+		angleAtHit = yaw;
 	}
 }
 
