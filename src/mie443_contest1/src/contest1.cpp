@@ -18,7 +18,7 @@ using namespace std;
 double angular, linear;
 double posX, posY, yaw, angleAtHit;
 double pi = 3.1416;
-bool bumperLeft = 0, bumperCenter = 0, bumperRight = 0;
+bool bumperLeft = false, bumperCenter = false, bumperRight = false;
 
 double laserRange=10;
 int laserSize=0, laserOffset=0, desiredAngle=5;
@@ -26,15 +26,15 @@ int laserSize=0, laserOffset=0, desiredAngle=5;
 
 void bumperCallback(const kobuki_msgs::BumperEvent msg){
 	if (msg.bumper == 0){
-		bumperLeft = 1;
+		bumperLeft = true;
 		angleAtHit = yaw;
 	}
 	else if (msg.bumper == 1){
-		bumperCenter = 1;
+		bumperCenter = true;
 		angleAtHit = yaw;
 	} 
 	else if (msg.bumper == 2){
-		bumperRight = 1;
+		bumperRight = true;
 		angleAtHit = yaw;
 	}
 }
@@ -65,10 +65,12 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 }
 
 void bumperHit(){
-	if (abs(yaw - angleAtHit) < pi/2){
+	if (fabs(yaw - angleAtHit) < pi/2){
 		angular = pi/6;
 		linear = 0.0;
+		ROS_INFO("Yaw: %f AngleAtHit: %f",yaw, angleAtHit);
 	} else {
+		ROS_INFO(">>>>>>>>WE HERE<<<<<<<<<");
 		bumperCenter = 0;
 		bumperLeft = 0;
 		bumperRight = 0;
@@ -95,8 +97,8 @@ int main(int argc, char **argv)
 
 	ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 1);
 
-	double angular = 0.0;
-	double linear = 0.0;
+	// double angular = 0.0;
+	// double linear = 0.0;
 	geometry_msgs::Twist vel;
 
 	std::chrono::time_point<std::chrono::system_clock> start;
@@ -109,11 +111,11 @@ int main(int argc, char **argv)
 		//.....**E-STOP DO NOT TOUCH**.......
 		eStop.block();
 		//...................................
-		ROS_INFO("Position: (%f, %f) Orientation: %f degrees Range: %f", posX, posY, yaw*180/pi, laserRange);
+		//ROS_INFO("Position: (%f, %f) Orientation: %f degrees Range: %f", posX, posY, yaw*180/pi, laserRange);
 
-		
+		ROS_INFO("left:%d , centre:%d, right:%d\n", bumperLeft, bumperCenter, bumperRight);
 
-		if (bumperCenter == 1 || bumperLeft == 1 || bumperRight == 1){
+		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		} else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
 			angular = 0.0;
