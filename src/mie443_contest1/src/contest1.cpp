@@ -15,7 +15,7 @@
 
 using namespace std;
 
-double angular, linear;
+double angular = 0.0, linear = 0.0;
 double posX, posY, yaw, angleAtHit;
 double pi = 3.1416;
 bool bumperLeft = false, bumperCenter = false, bumperRight = false;
@@ -43,6 +43,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	int iStart,iEnd;
 	laserSize = (msg->angle_max - msg->angle_min)/msg->angle_increment;
 	laserOffset = desiredAngle*pi/(180*msg->angle_increment);
+	
 	if(desiredAngle*pi/180 < msg->angle_max && -desiredAngle*pi/180 > msg->angle_min){ 
 		iStart = laserSize/2 - laserOffset;
 		iEnd = laserSize/2 + laserOffset;
@@ -53,15 +54,15 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 
 	laserRange = 11;
 	for(int i =0; i < laserSize; i++){
-		if (i < iStart/3 && msg->ranges[i] < laserLeft){ //left sensors
+		if (i < iStart && msg->ranges[i] < laserLeft){ //left sensors
 			laserLeft = msg->ranges[i];
-		} else if (i < 2*iStart/3 && msg->ranges[i] < laserCentre){ //center sensors
+		} else if (i >= iStart && i < iEnd &&  msg->ranges[i] < laserCentre){ //center sensors
 			laserCentre = msg->ranges[i];
-		} else if (i > 2*iStart/3 && msg->ranges[i] < laserRight){ // right sensors
+		} else if (i >= iEnd && msg->ranges[i] < laserRight){ // right sensors
 			laserRight = msg->ranges[i];
 		}
 
-		if(laserRange>msg->ranges[i])
+		if(laserRange > msg->ranges[i])
 			laserRange = msg->ranges[i];
 	}
 	
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		}
-		else if (laserCentre > 2.0) {
+		else if (laserCentre > 0.2) {
 			// keep going
 			linear = 0.2;
 			angular = 0.0;
