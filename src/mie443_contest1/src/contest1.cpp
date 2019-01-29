@@ -48,15 +48,15 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 		iEnd = laserSize/2 + laserOffset;
 	} else {
 		iStart = 0;
-		iEnd = laserSie;
+		iEnd = laserSize;
 	}
 
 	laserRange = 11;
 	for(int i =0; i < laserSize; i++){
 		if (i < iStart/3 && msg->ranges[i] < laserLeft){ //left sensors
 			laserLeft = msg->ranges[i];
-		} else if (i < 2*iStart/3 && msg->ranges[i] < laserCenter){ //center sensors
-			laserCenter = msg->ranges[i];
+		} else if (i < 2*iStart/3 && msg->ranges[i] < laserCentre){ //center sensors
+			laserCentre = msg->ranges[i];
 		} else if (i > 2*iStart/3 && msg->ranges[i] < laserRight){ // right sensors
 			laserRight = msg->ranges[i];
 		}
@@ -122,31 +122,43 @@ int main(int argc, char **argv)
 
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
-		} else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
-			angular = 0.0;
-			linear = 0.2;
 		}
-		else if (posX > 0.5 && yaw < pi/2 && laserRange > 0.5){
-			angular = pi/6;
-			linear = 0.0;
-		} 
-		else if (laserRange > 1.0){
-			if(yaw < 17*pi/36 || posX > 0.6)
-			{
-				angular = pi/12;
-				linear = 0.1;
-			}
-			else if(yaw > 19*pi/36 || posX < 0.4)
-			{
+		else if (laserCentre > 2.0) {
+			// keep going
+			linear = 0.2;
+			angular = 0.0;
+		} else if (laserLeft < laserRight) {
+			linear = 0;
 			angular = -pi/12;
-			linear = 0.1;
-			}
-			else
-			{
-			angular = 0;
-			linear = 0.1;
-			}
+		} else if (laserRight <= laserLeft) {
+			linear = 0;
+			angular = pi/12;
 		} 
+		// } else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
+		// 	angular = 0.0;
+		// 	linear = 0.2;
+		// }
+		// else if (posX > 0.5 && yaw < pi/2 && laserRange > 0.5){
+		// 	angular = pi/6;
+		// 	linear = 0.0;
+		// } 
+		// else if (laserRange > 1.0){
+		// 	if(yaw < 17*pi/36 || posX > 0.6)
+		// 	{
+		// 		angular = pi/12;
+		// 		linear = 0.1;
+		// 	}
+		// 	else if(yaw > 19*pi/36 || posX < 0.4)
+		// 	{
+		// 	angular = -pi/12;
+		// 	linear = 0.1;
+		// 	}
+		// 	else
+		// 	{
+		// 	angular = 0;
+		// 	linear = 0.1;
+		// 	}
+		// } 
 		else 
 		{
 			angular = 0.0;
