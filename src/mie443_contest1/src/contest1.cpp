@@ -130,10 +130,10 @@ int main(int argc, char **argv)
 			angular = 0.0;
 		} else if (laserLeft < laserRight) {
 			linear = 0;
-			angular = -pi/12;
+			angular = pi/12;
 		} else if (laserRight <= laserLeft) {
 			linear = 0;
-			angular = pi/12;
+			angular = -pi/12;
 		} 
 		// } else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
 		// 	angular = 0.0;
