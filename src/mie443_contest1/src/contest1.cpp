@@ -20,7 +20,7 @@ double posX, posY, yaw, angleAtHit;
 double pi = 3.1416;
 bool bumperLeft = false, bumperCenter = false, bumperRight = false;
 
-double laserRange=10;
+double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10;
 int laserSize=0, laserOffset=0, desiredAngle=5;
 
 
@@ -40,22 +40,29 @@ void bumperCallback(const kobuki_msgs::BumperEvent msg){
 }
 
 void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
+	int iStart,iEnd;
 	laserSize = (msg->angle_max - msg->angle_min)/msg->angle_increment;
 	laserOffset = desiredAngle*pi/(180*msg->angle_increment);
+	if(desiredAngle*pi/180 < msg->angle_max && -desiredAngle*pi/180 > msg->angle_min){ 
+		iStart = laserSize/2 - laserOffset;
+		iEnd = laserSize/2 + laserOffset;
+	} else {
+		iStart = 0;
+		iEnd = laserSie;
+	}
 
 	laserRange = 11;
+	for(int i =0; i < laserSize; i++){
+		if (i < iStart/3 && msg->ranges[i] < laserLeft){ //left sensors
+			laserLeft = msg->ranges[i];
+		} else if (i < 2*iStart/3 && msg->ranges[i] < laserCenter){ //center sensors
+			laserCenter = msg->ranges[i];
+		} else if (i > 2*iStart/3 && msg->ranges[i] < laserRight){ // right sensors
+			laserRight = msg->ranges[i];
+		}
 
-	if(desiredAngle*pi/180 < msg->angle_max && -desiredAngle*pi/180 > msg->angle_min){
-		for(int i = laserSize/2 - laserOffset; i < laserSize/2 + laserOffset; i++){
-			if(laserRange>msg->ranges[i])
-				laserRange = msg->ranges[i];
-			}
-		}
-	else{
-		for(int i =0; i < laserSize; i++){
-			if(laserRange>msg->ranges[i])
-				laserRange = msg->ranges[i];
-		}
+		if(laserRange>msg->ranges[i])
+			laserRange = msg->ranges[i];
 	}
 	
 	if(laserRange == 11)
@@ -68,9 +75,7 @@ void bumperHit(){
 	if (fabs(yaw - angleAtHit) < pi/2){
 		angular = pi/6;
 		linear = 0.0;
-		ROS_INFO("Yaw: %f AngleAtHit: %f",yaw, angleAtHit);
 	} else {
-		ROS_INFO(">>>>>>>>WE HERE<<<<<<<<<");
 		bumperCenter = 0;
 		bumperLeft = 0;
 		bumperRight = 0;
