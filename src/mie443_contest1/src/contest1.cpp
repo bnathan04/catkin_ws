@@ -75,12 +75,17 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	ROS_INFO(">>>>>>>LASER CENTRE: %f<<<<<<\n", laserCentre);
 }
 
+<<<<<<< Updated upstream
 void infoRotate(){
 	while (fabs(currentYaw) > (yaw -pi/6) ){
 		angular = -pi/6;
 		linear = 0.0;
 	} 
 	while (fabs(yaw) <  (currentYaw + pi/6) ){
+=======
+void bumperHit(){
+	if (fabs(yaw - angleAtHit) < pi/4){
+>>>>>>> Stashed changes
 		angular = pi/6;
 		linear = 0.0;
 	} 
@@ -100,6 +105,7 @@ void bumperHit(){
 	bumperRight=0;
 	}
 }
+
 
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	posX = msg->pose.pose.position.x;
@@ -142,44 +148,24 @@ int main(int argc, char **argv)
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		}
-		else if (laserCentre > 1) {
+		else if (laserCentre > 0.8) {
 			// keep going
 			linear = 0.2;
 			angular = 0.0;
+
+		}else if (laserCentre < 0.8 && laserRight<laserCentre && laserLeft<laserCentre) {
+			// keep going
+			bumperCenter = true;
+			angleAtHit = yaw;
+			infoRotate();
+			
 		} else if (laserLeft < laserRight) {
-			infoRotate();
-			linear = 0;
-			angular = pi/6;
+			linear = 0.1;
+			angular = pi/3;
 		} else if (laserRight <= laserLeft) {
-			infoRotate();
-			linear = 0;
-			angular = -pi/6;
+			linear = 0.1;
+			angular = -pi/3;
 		} 
-		// } else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
-		// 	angular = 0.0;
-		// 	linear = 0.2;
-		// }
-		// else if (posX > 0.5 && yaw < pi/2 && laserRange > 0.5){
-		// 	angular = pi/6;
-		// 	linear = 0.0;
-		// } 
-		// else if (laserRange > 1.0){
-		// 	if(yaw < 17*pi/36 || posX > 0.6)
-		// 	{
-		// 		angular = pi/12;
-		// 		linear = 0.1;
-		// 	}
-		// 	else if(yaw > 19*pi/36 || posX < 0.4)
-		// 	{
-		// 	angular = -pi/12;
-		// 	linear = 0.1;
-		// 	}
-		// 	else
-		// 	{
-		// 	angular = 0;
-		// 	linear = 0.1;
-		// 	}
-		// } 
 		else 
 		{
 			angular = 0.0;
