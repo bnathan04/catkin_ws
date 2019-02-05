@@ -20,10 +20,11 @@ using namespace std;
 double angular = 0.0, linear = 0.0;
 double posX, posY, yaw, angleAtHit, currentYaw;
 double pi = 3.1416;
-bool bumperLeft = false, bumperCenter = false, bumperRight = false;
+bool bumperLeft = false, bumperCenter = false, bumperRight = false, spinRandomly = false;
 
 double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10;
 int laserSize=0, laserOffset=0, desiredAngle=5;
+uint64_t secondsElapsed = 0, tempTime = 0, stopSpinTime = 0; // the timer just started, so we know it is less than 480, no need to check.
 
 geometry_msgs::Twist vel;
 ros::Publisher vel_pub;
@@ -82,29 +83,29 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	ROS_INFO("Laser Centre: %f\n", laserRight);
 }
 
-void infoRotate(){
-	while (fabs(currentYaw) > (yaw -pi/6) ){
-		angular = -pi/6;
-		linear = 0.0;
-		vel.angular.z = angular;
-		vel.linear.x = linear;
-		vel_pub.publish(vel);
-	} 
-	while (fabs(yaw) <  (currentYaw + pi/6) ){
-		angular = pi/6;
-		linear = 0.0;
-		vel.angular.z = angular;
-		vel.linear.x = linear;
-		vel_pub.publish(vel);
-	} 	
-	while (fabs(yaw) >=  (currentYaw) ){
-		angular = -pi/6;
-		linear = 0.0;
-		vel.angular.z = angular;
-		vel.linear.x = linear;
-		vel_pub.publish(vel);
-	} 
-}
+// void infoRotate(){
+// 	while (fabs(currentYaw) > (yaw -pi/6) ){
+// 		angular = -pi/6;
+// 		linear = 0.0;
+// 		vel.angular.z = angular;
+// 		vel.linear.x = linear;
+// 		vel_pub.publish(vel);
+// 	} 
+// 	while (fabs(yaw) <  (currentYaw + pi/6) ){
+// 		angular = pi/6;
+// 		linear = 0.0;
+// 		vel.angular.z = angular;
+// 		vel.linear.x = linear;
+// 		vel_pub.publish(vel);
+// 	} 	
+// 	while (fabs(yaw) >=  (currentYaw) ){
+// 		angular = -pi/6;
+// 		linear = 0.0;
+// 		vel.angular.z = angular;
+// 		vel.linear.x = linear;
+// 		vel_pub.publish(vel);
+// 	} 
+// }
 
 void bumperHit(){
 	if(fabs(yaw-angleAtHit) < pi/2){
@@ -114,6 +115,16 @@ void bumperHit(){
 		bumperCenter=0;
 		bumperLeft=0;
 		bumperRight=0;
+	}
+}
+
+void randomSpin(){
+	if(secondsElapsed < stopSpinTime){
+		angular = pi/4;
+		linear = 0;
+	} else{
+		spinRandomly = false;
+		tempTime = secondsElapsed;
 	}
 }
 
@@ -142,7 +153,6 @@ int main(int argc, char **argv)
 
 	std::chrono::time_point<std::chrono::system_clock> start;
 	start = std::chrono::system_clock::now(); /* start timer */
-    uint64_t secondsElapsed = 0; // the timer just started, so we know it is less than 480, no need to check.
 
 	while(ros::ok() && secondsElapsed <= 480)
     {
@@ -156,6 +166,9 @@ int main(int argc, char **argv)
 		currentYaw = yaw;
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
+		
+		} else if (spinRandomly){
+			randomSpin();
 		} else if (laserLeft < 0.5) {
 			// keep going
 			linear = 0;
@@ -165,6 +178,10 @@ int main(int argc, char **argv)
 			linear = 0;
 			angular = -pi/6;
 		} else if (laserCentre > 0.8) {
+			if (secondsElapsed - tempTime > 45){
+				stopSpinTime = rand()%3 + 6 + secondsElapsed;
+				spinRandomly = true;
+			}
 			// keep going
 			linear = 0.2;
 			angular = 0.0;
@@ -173,7 +190,6 @@ int main(int argc, char **argv)
 			// keep going
 			bumperCenter = true;
 			angleAtHit = yaw;
-			infoRotate();
 			
 		} else if (laserLeft < laserRight) {
 			linear = 0.1;
