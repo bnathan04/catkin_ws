@@ -16,7 +16,7 @@
 using namespace std;
 
 double angular = 0.0, linear = 0.0;
-double posX, posY, yaw, angleAtHit;
+double posX, posY, yaw, angleAtHit, currentYaw;
 double pi = 3.1416;
 bool bumperLeft = false, bumperCenter = false, bumperRight = false;
 
@@ -75,14 +75,29 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	ROS_INFO(">>>>>>>LASER CENTRE: %f<<<<<<\n", laserCentre);
 }
 
-void bumperHit(){
-	if (fabs(yaw - angleAtHit) < pi/2){
+void infoRotate(){
+	while (fabs(currentYaw) > (yaw -pi/6) ){
+		angular = -pi/6;
+		linear = 0.0;
+	} 
+	while (fabs(yaw) <  (currentYaw + pi/6) ){
 		angular = pi/6;
 		linear = 0.0;
-	} else {
-		bumperCenter = 0;
-		bumperLeft = 0;
-		bumperRight = 0;
+	} 
+	while (fabs(yaw) >=  (currentYaw) ){
+		angular = -pi/6;
+		linear = 0.0;
+	} 
+}
+
+void bumperHit(){
+	if(fabs(yaw-angleAtHit) < pi/2){
+		angular = pi/6;
+		linear = 0;
+	} else{
+	bumperCenter=0;
+	bumperLeft=0;
+	bumperRight=0;
 	}
 }
 
@@ -123,7 +138,7 @@ int main(int argc, char **argv)
 		//ROS_INFO("Position: (%f, %f) Orientation: %f degrees Range: %f", posX, posY, yaw*180/pi, laserRange);
 
 		// ROS_INFO(">>>>>>>>>>>>LASERCENTRE MAIN: %f\n", laserCentre);
-
+		currentYaw = yaw;
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		}
@@ -132,9 +147,11 @@ int main(int argc, char **argv)
 			linear = 0.2;
 			angular = 0.0;
 		} else if (laserLeft < laserRight) {
+			infoRotate();
 			linear = 0;
 			angular = pi/6;
 		} else if (laserRight <= laserLeft) {
+			infoRotate();
 			linear = 0;
 			angular = -pi/6;
 		} 
