@@ -52,7 +52,10 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 		iEnd = laserSize;
 	}
 
-	laserRange = 11;
+	laserRange = 999.9;
+	laserCentre = 999.9;
+	laserRight = 999.9;
+	laserLeft = 999.9;
 	for(int i =0; i < laserSize; i++){
 		if (i < iStart && msg->ranges[i] < laserLeft){ //left sensors
 			laserLeft = msg->ranges[i];
@@ -69,7 +72,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	if(laserRange == 11)
 		laserRange = 0;
 
-	//ROS_INFO(“Size of laser scan array: %i and size of offset: %i”, laserSize, laserOffset);
+	ROS_INFO(">>>>>>>LASER CENTRE: %f<<<<<<\n", laserCentre);
 }
 
 void bumperHit(){
@@ -119,21 +122,21 @@ int main(int argc, char **argv)
 		//...................................
 		//ROS_INFO("Position: (%f, %f) Orientation: %f degrees Range: %f", posX, posY, yaw*180/pi, laserRange);
 
-		ROS_INFO("left:%d , centre:%d, right:%d\n", bumperLeft, bumperCenter, bumperRight);
+		// ROS_INFO(">>>>>>>>>>>>LASERCENTRE MAIN: %f\n", laserCentre);
 
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		}
-		else if (laserCentre > 0.2) {
+		else if (laserCentre > 1) {
 			// keep going
 			linear = 0.2;
 			angular = 0.0;
 		} else if (laserLeft < laserRight) {
 			linear = 0;
-			angular = pi/12;
+			angular = pi/6;
 		} else if (laserRight <= laserLeft) {
 			linear = 0;
-			angular = -pi/12;
+			angular = -pi/6;
 		} 
 		// } else if (posX < 0.5 && yaw < pi/12 && laserRange > 0.7){
 		// 	angular = 0.0;
