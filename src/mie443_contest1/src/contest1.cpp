@@ -72,20 +72,17 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	if(laserRange == 11)
 		laserRange = 0;
 
-	ROS_INFO(">>>>>>>LASER CENTRE: %f<<<<<<\n", laserCentre);
+	ROS_INFO("Laser Left: %f\n", laserLeft);
+	ROS_INFO("Laser Centre: %f\n", laserCentre);
+	ROS_INFO("Laser Centre: %f\n", laserRight);
 }
 
-<<<<<<< Updated upstream
 void infoRotate(){
 	while (fabs(currentYaw) > (yaw -pi/6) ){
 		angular = -pi/6;
 		linear = 0.0;
 	} 
 	while (fabs(yaw) <  (currentYaw + pi/6) ){
-=======
-void bumperHit(){
-	if (fabs(yaw - angleAtHit) < pi/4){
->>>>>>> Stashed changes
 		angular = pi/6;
 		linear = 0.0;
 	} 
@@ -100,9 +97,9 @@ void bumperHit(){
 		angular = pi/6;
 		linear = 0;
 	} else{
-	bumperCenter=0;
-	bumperLeft=0;
-	bumperRight=0;
+		bumperCenter=0;
+		bumperLeft=0;
+		bumperRight=0;
 	}
 }
 
@@ -147,8 +144,15 @@ int main(int argc, char **argv)
 		currentYaw = yaw;
 		if (bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
-		}
-		else if (laserCentre > 0.8) {
+		} else if (laserLeft < 0.5) {
+			// keep going
+			linear = 0;
+			angular = pi/6;
+		} else if (laserRight < 0.5) {
+			// keep going
+			linear = 0;
+			angular = -pi/6;
+		} else if (laserCentre > 0.8) {
 			// keep going
 			linear = 0.2;
 			angular = 0.0;
