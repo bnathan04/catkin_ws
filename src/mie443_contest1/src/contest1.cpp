@@ -15,6 +15,8 @@
 
 using namespace std;
 
+
+
 double angular = 0.0, linear = 0.0;
 double posX, posY, yaw, angleAtHit, currentYaw;
 double pi = 3.1416;
@@ -22,6 +24,9 @@ bool bumperLeft = false, bumperCenter = false, bumperRight = false;
 
 double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10;
 int laserSize=0, laserOffset=0, desiredAngle=5;
+
+geometry_msgs::Twist vel;
+ros::Publisher vel_pub;
 
 
 void bumperCallback(const kobuki_msgs::BumperEvent msg){
@@ -81,14 +86,23 @@ void infoRotate(){
 	while (fabs(currentYaw) > (yaw -pi/6) ){
 		angular = -pi/6;
 		linear = 0.0;
+		vel.angular.z = angular;
+		vel.linear.x = linear;
+		vel_pub.publish(vel);
 	} 
 	while (fabs(yaw) <  (currentYaw + pi/6) ){
 		angular = pi/6;
 		linear = 0.0;
-	} 
+		vel.angular.z = angular;
+		vel.linear.x = linear;
+		vel_pub.publish(vel);
+	} 	
 	while (fabs(yaw) >=  (currentYaw) ){
 		angular = -pi/6;
 		linear = 0.0;
+		vel.angular.z = angular;
+		vel.linear.x = linear;
+		vel_pub.publish(vel);
 	} 
 }
 
@@ -121,12 +135,10 @@ int main(int argc, char **argv)
 	ros::Subscriber bumper_sub = nh.subscribe("mobile_base/events/bumper", 10, &bumperCallback);
 	ros::Subscriber laser_sub = nh.subscribe("scan", 10, &laserCallback);
 	ros::Subscriber odom= nh.subscribe("odom", 1, odomCallback); 
-
-	ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 1);
+	vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 1);
 
 	// double angular = 0.0;
 	// double linear = 0.0;
-	geometry_msgs::Twist vel;
 
 	std::chrono::time_point<std::chrono::system_clock> start;
 	start = std::chrono::system_clock::now(); /* start timer */
@@ -178,7 +190,6 @@ int main(int argc, char **argv)
 
   		vel.angular.z = angular;
   		vel.linear.x = linear;
-
   		vel_pub.publish(vel);
 
         // The last thing to do is to update the timer.
