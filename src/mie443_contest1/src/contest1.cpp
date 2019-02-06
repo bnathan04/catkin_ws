@@ -108,7 +108,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 // }
 
 void bumperHit(){
-	if(fabs(yaw-angleAtHit) < pi/2){
+	if(fabs(yaw-angleAtHit) < pi/3){
 		angular = pi/6;
 		linear = 0;
 	} else{
@@ -120,7 +120,7 @@ void bumperHit(){
 
 void randomSpin(){
 	if(secondsElapsed < stopSpinTime){
-		angular = pi/4;
+		angular = pi/6;
 		linear = 0;
 	} else{
 		spinRandomly = false;
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
 		// ROS_INFO(">>>>>>>>>>>>LASERCENTRE MAIN: %f\n", laserCentre);
 		currentYaw = yaw;
-		if (bumperCenter || bumperLeft || bumperRight){
+		if (laserCentre < 0.6 || bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		
 		} else if (spinRandomly){
@@ -178,8 +178,8 @@ int main(int argc, char **argv)
 			linear = 0;
 			angular = -pi/6;
 		} else if (laserCentre > 0.8) {
-			if (secondsElapsed - tempTime > 45){
-				stopSpinTime = rand()%3 + 6 + secondsElapsed;
+			if (secondsElapsed - tempTime > 30){
+				stopSpinTime = rand()%9 + 3 + secondsElapsed;
 				spinRandomly = true;
 			}
 			// keep going
