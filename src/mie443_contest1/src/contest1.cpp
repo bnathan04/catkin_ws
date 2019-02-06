@@ -164,22 +164,28 @@ int main(int argc, char **argv)
 
 		// ROS_INFO(">>>>>>>>>>>>LASERCENTRE MAIN: %f\n", laserCentre);
 		currentYaw = yaw;
+
+		int randomTime = rand()%20 + 20;
+
+
 		if (laserCentre < 0.6 || bumperCenter || bumperLeft || bumperRight){
 			bumperHit();
 		
 		} else if (spinRandomly){
 			randomSpin();
-		} else if (laserLeft < 0.5) {
+
+		}else if (laserLeft < 0.5) {
 			// keep going
 			linear = 0;
 			angular = pi/6;
-		} else if (laserRight < 0.5) {
+		}else if (laserRight < 0.5) {
 			// keep going
 			linear = 0;
 			angular = -pi/6;
-		} else if (laserCentre > 0.8) {
-			if (secondsElapsed - tempTime > 30){
-				stopSpinTime = rand()%9 + 3 + secondsElapsed;
+
+		}else if (laserCentre > 0.8) {
+			if (secondsElapsed - tempTime > randomTime){
+				stopSpinTime = rand()%6 + secondsElapsed;
 				spinRandomly = true;
 			}
 			// keep going
@@ -191,12 +197,12 @@ int main(int argc, char **argv)
 			bumperCenter = true;
 			angleAtHit = yaw;
 			
-		} else if (laserLeft < laserRight) {
-			linear = 0.1;
-			angular = pi/3;
-		} else if (laserRight <= laserLeft) {
-			linear = 0.1;
-			angular = -pi/3;
+		}else if (laserLeft < laserRight) {
+			linear = 0.0;
+			angular = pi/4;
+		}else if (laserRight <= laserLeft) {
+			linear = 0.0;
+			angular = -pi/4;
 		} 
 		else 
 		{
