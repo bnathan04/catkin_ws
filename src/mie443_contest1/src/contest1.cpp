@@ -20,10 +20,10 @@ using namespace std;
 double angular = 0.0, linear = 0.0;
 double posX, posY, yaw, angleAtHit, currentYaw;
 double pi = 3.1416;
-bool bumperLeft = false, bumperCenter = false, bumperRight = false, spinRandomly = false;
+bool isRotating = false, spinRandomly = false;
 
-double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10;
-int laserSize=0, laserOffset=0, desiredAngle=5;
+double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10,rotationAngle = pi/2;
+int laserSize=0, laserOffset=0, desiredAngle=5, rotationDirection = 1;
 uint64_t secondsElapsed = 0, tempTime = 0, stopSpinTime = 0; // the timer just started, so we know it is less than 480, no need to check.
 
 geometry_msgs::Twist vel;
@@ -32,16 +32,22 @@ ros::Publisher vel_pub;
 
 void bumperCallback(const kobuki_msgs::BumperEvent msg){
 	if (msg.bumper == 0){
-		bumperLeft = true;
+		isRotating = true;
 		angleAtHit = yaw;
+		rotationAngle = pi/3;
+		ROS_INFO("--------------- BUMPER HIT ---------------\n");
 	}
 	else if (msg.bumper == 1){
-		bumperCenter = true;
+		isRotating = true;
 		angleAtHit = yaw;
+		rotationAngle = pi/3;
+		ROS_INFO("--------------- BUMPER HIT ---------------\n");
 	} 
 	else if (msg.bumper == 2){
-		bumperRight = true;
+		isRotating = true;
 		angleAtHit = yaw;
+		rotationAngle = pi/3;
+		ROS_INFO("--------------- BUMPER HIT ---------------\n");
 	}
 }
 
@@ -78,9 +84,9 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	if(laserRange == 11)
 		laserRange = 0;
 
-	ROS_INFO("Laser Left: %f\n", laserLeft);
-	ROS_INFO("Laser Centre: %f\n", laserCentre);
-	ROS_INFO("Laser Centre: %f\n", laserRight);
+	//ROS_INFO("Laser Left: %f\n", laserLeft);
+	//ROS_INFO("Laser Centre: %f\n", laserCentre);
+	//ROS_INFO("Laser Right: %f\n", laserRight);
 }
 
 // void infoRotate(){
@@ -107,20 +113,18 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 // 	} 
 // }
 
-void bumperHit(){
-	if(fabs(yaw-angleAtHit) < pi/3){
-		angular = pi/6;
+void rotateFixedAmount(){
+	if(fabs(yaw-angleAtHit) < rotationAngle){
+		angular = rotationDirection*pi/8;
 		linear = 0;
 	} else{
-		bumperCenter=0;
-		bumperLeft=0;
-		bumperRight=0;
+		isRotating = false;
 	}
 }
 
 void randomSpin(){
 	if(secondsElapsed < stopSpinTime){
-		angular = pi/6;
+		angular = -1*rotationDirection*pi/8;
 		linear = 0;
 	} else{
 		spinRandomly = false;
@@ -168,41 +172,70 @@ int main(int argc, char **argv)
 		int randomTime = rand()%20 + 20;
 
 
-		if (laserCentre < 0.6 || bumperCenter || bumperLeft || bumperRight){
-			bumperHit();
+		if (isRotating){
+			rotateFixedAmount();
 		
+		} else if ((laserCentre == 999.9||laserCentre < 0.5) && (laserLeft == 999.9||laserLeft < 0.5) && (laserRight == 999.9||laserRight < 0.5)){
+			angular = pi/8;
+			linear = 0;
+			isRotating = true;
+			angleAtHit = yaw;
+			rotationAngle = pi/2;
+			ROS_INFO("-----Spin 180-----: \n");
 		} else if (spinRandomly){
 			randomSpin();
 
-		}else if (laserLeft < 0.5) {
+		}else if (laserLeft < 0.45) {
 			// keep going
 			linear = 0;
-			angular = pi/6;
-		}else if (laserRight < 0.5) {
+			angular = pi/8;
+			ROS_INFO("-----Correct Right-----: \n");
+		}else if (laserRight < 0.45) {
 			// keep going
 			linear = 0;
-			angular = -pi/6;
+			angular = -pi/8;
+			ROS_INFO("-----Correct Left-----: \n");
 
 		}else if (laserCentre > 0.8) {
 			if (secondsElapsed - tempTime > randomTime){
-				stopSpinTime = rand()%6 + secondsElapsed;
+				stopSpinTime = rand()%4 + secondsElapsed;
 				spinRandomly = true;
+				ROS_INFO("-----Random Spin Initiated-----: \n");
 			}
 			// keep going
-			linear = 0.2;
-			angular = 0.0;
+			if (laserCentre > 0.83)
+				linear = 0.2;
+			else
+				linear = 0.1;
+			angular = -1*rotationDirection*pi/32; //maybe turn off
 
 		}else if (laserCentre < 0.8 && laserRight<laserCentre && laserLeft<laserCentre) {
+			ROS_INFO("-----Corner Case-----: \n");
 			// keep going
-			bumperCenter = true;
+			isRotating = true;
 			angleAtHit = yaw;
+			rotationAngle = pi/3;
+			if (laserLeft < laserRight)
+				rotationDirection = 1;
+			else if (laserLeft >= laserRight)
+				rotationDirection = -1;
 			
 		}else if (laserLeft < laserRight) {
-			linear = 0.0;
-			angular = pi/4;
+			//linear = 0.0;
+			//angular = pi/8;
+			isRotating = true;
+			angleAtHit = yaw;
+			rotationAngle = pi/6;
+			rotationDirection = 1;
+			ROS_INFO("-----30deg Left Turn-----: \n");
 		}else if (laserRight <= laserLeft) {
-			linear = 0.0;
-			angular = -pi/4;
+			//linear = 0.0;
+			//angular = -pi/8;
+			isRotating = true;
+			angleAtHit = yaw;
+			rotationAngle = pi/6;
+			rotationDirection = -1;
+			ROS_INFO("-----30deg Right Turn-----: \n");
 		} 
 		else 
 		{
