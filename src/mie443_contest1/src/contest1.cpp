@@ -35,7 +35,7 @@ void bumperCallback(const kobuki_msgs::BumperEvent msg){
 		isRotating = true;
 		angleAtHit = yaw;
 		rotationAngle = pi/3;
-		rotationDirection = 1;
+		rotationDirection = -1;
 		ROS_INFO("--------------- BUMPER HIT ---------------\n");
 	}
 	else if (msg.bumper == 1){
@@ -48,7 +48,7 @@ void bumperCallback(const kobuki_msgs::BumperEvent msg){
 		isRotating = true;
 		angleAtHit = yaw;
 		rotationAngle = pi/3;
-		rotationDirection = -1;
+		rotationDirection = 1;
 		ROS_INFO("--------------- BUMPER HIT ---------------\n");
 	}
 }
@@ -198,14 +198,14 @@ int main(int argc, char **argv)
 			angular = -pi/8;
 			ROS_INFO("-----Correct Left-----: \n");
 
-		}else if (laserCentre > 0.8) {
+		}else if (laserCentre > 0.6) {
 			if (secondsElapsed - tempTime > randomTime){
 				stopSpinTime = rand()%4 + secondsElapsed;
 				spinRandomly = true;
 				ROS_INFO("-----Random Spin Initiated-----: \n");
 			}
 			// keep going
-			if (laserCentre > 0.83)
+			if (laserCentre > 0.8)
 				linear = 0.2;
 			else
 				linear = 0.1;
