@@ -2,17 +2,49 @@
 #include <navigation.h>
 #include <robot_pose.h>
 #include <imagePipeline.h>
+#include <limits>
+#include <cmath>
+#include <algorithm> 
 
-/* Our includes */
-#include <cmath.h>
+double findDistanceOfPath (std::vector<float> origin, std::vector<std::vector<float>> points){
+    double distance = 0;
+    distance += sqrt(pow(origin[0] - points[0][0], 2) + pow(origin[1] - points[0][1], 2));
+    for (int i = 0; i < points.size() - 1; i++){
+        distance += sqrt(pow(points[i][0] - points[i+1][0], 2) + pow(points[i][1] - points[i+1][1], 2));
+    }
+    distance += sqrt(pow(origin[0] - points[points.size() - 1][0], 2) + pow(origin[1] - points[points.size() - 1][1], 2));
+    return distance;
+}
+
+std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std::vector<std::vector<float>> pointsToVisit){
+    std::cout << pointsToVisit[0][0] << " " << pointsToVisit[1][0] << " " << pointsToVisit[2][0] << " " << 
+                pointsToVisit[3][0] << " " << pointsToVisit[4][0] << std::endl;
+    double minimumDistance = DBL_MAX;
+    std::vector<std::vector<float>> optimalPath;
+    std::sort (pointsToVisit.begin(), pointsToVisit.end());
+    int index =  0;
+    do {
+        double curDistance = findDistanceOfPath(origin, pointsToVisit);
+        //std::cout << "Distance of path "<<index++ << ": "<< curDistance <<std::endl;
+        if(curDistance < minimumDistance){
+            minimumDistance = curDistance;
+            optimalPath = pointsToVisit;
+        }
+    } while ( std::next_permutation(pointsToVisit.begin(),pointsToVisit.end()));
+
+    std::cout << optimalPath[0][0] << " " << optimalPath[1][0] << " " << optimalPath[2][0] << " " << 
+                 optimalPath[3][0] << " " << optimalPath[4][0] << std::endl;
+
+    return optimalPath;
+}
 
 /* Params */
-float distanceFromBox = 2.50;
+float distanceFromBox = 0.25;
 
 
-std::vector<vector<float>> computeTarget(Boxes) {
+std::vector<std::vector<float>> computeTarget(Boxes boxes) {
 
-    std::vector<vector<float>> result;
+    std::vector<std::vector<float>> result;
 
     for(int i = 0; i < boxes.coords.size(); ++i) {
         float x = boxes.coords[i][0];
@@ -44,14 +76,14 @@ std::vector<vector<float>> computeTarget(Boxes) {
            
         float xTarget = x + xOffset;
         float yTarget = y + yOffset;
-        float phiTarget = ((phi + 180)%360) * M_PI / 180.0 ;
+        float phiTarget = fmod((phi + 180),360) * M_PI / 180.0 ;
 
-        vector<float> newCoords;
+        std::vector<float> newCoords;
         newCoords.push_back(xTarget);
         newCoords.push_back(yTarget);
         newCoords.push_back(phiTarget);
 
-        result.push_back(newCoords)
+        result.push_back(newCoords);
     }
 
     return result;
@@ -81,20 +113,24 @@ int main(int argc, char** argv) {
     ImagePipeline imagePipeline(n);
     // Execute strategy.
 
-    std::vector<vector<float>> targetPoints = computeTarget(Boxes);
-
-
+    std::vector<std::vector<float>> targetPoints = computeTarget(boxes);
+    std::vector<std::vector<float>> path = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, targetPoints);
+    path.push_back({robotPose.x, robotPose.y, robotPose.phi});
+    int index = 0;
     while(ros::ok()) {
         ros::spinOnce();
+        std::cout << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
+            << robotPose.phi << std::endl;
         /***YOUR CODE HERE***/
         // Use: boxes.coords
         // Use: robotPose.x, robotPose.y, robotPose.phi
-
-
-
-
+        std::cout << path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
+        Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
         imagePipeline.getTemplateID(boxes);
+        index++;
         ros::Duration(0.01).sleep();
     }
     return 0;
 }
+
+
