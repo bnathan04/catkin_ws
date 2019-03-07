@@ -49,7 +49,7 @@ std::vector<std::vector<float>> computeTarget(Boxes boxes) {
     for(int i = 0; i < boxes.coords.size(); ++i) {
         float x = boxes.coords[i][0];
         float y = boxes.coords[i][1];
-        float phi = boxes.coords[i][2] * 180.0 / M_PI;
+        float phi = boxes.coords[i][2];
 
         float xOffset = 0.0;
         float yOffset = 0.0;
@@ -80,8 +80,8 @@ std::vector<std::vector<float>> computeTarget(Boxes boxes) {
         float xTarget = x + xOffset;
         float yTarget = y + yOffset;
         float phiTarget;
-        if (phi >= 0) phiTarget =(phi - 180)*M_PI / 180.0;
-        if (phi < 0) phiTarget = (phi + 180) * M_PI / 180.0;
+        if (phi >= 0) phiTarget =(phi - M_PI);
+        if (phi < 0) phiTarget = (phi + M_PI);
 
         std::vector<float> newCoords;
         newCoords.push_back(xTarget);
@@ -117,19 +117,19 @@ int main(int argc, char** argv) {
     // Initialize image objectand subscriber.
     ImagePipeline imagePipeline(n);
     // Execute strategy.
-
+    ros::spinOnce();
     std::vector<std::vector<float>> targetPoints = computeTarget(boxes);
     std::vector<std::vector<float>> path = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, targetPoints);
     path.push_back({robotPose.x, robotPose.y, robotPose.phi});
     int index = 0;
     while(ros::ok()) {
         ros::spinOnce();
-        std::cout << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
+        std::cout<<"Robot Position: " << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
             << robotPose.phi << std::endl;
         /***YOUR CODE HERE***/
         // Use: boxes.coords
         // Use: robotPose.x, robotPose.y, robotPose.phi
-        std::cout << path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
+        std::cout << "Curent Goal:"<<path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
         Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
         imagePipeline.getTemplateID(boxes);
         index++;
