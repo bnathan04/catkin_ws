@@ -54,29 +54,34 @@ std::vector<std::vector<float>> computeTarget(Boxes boxes) {
         float xOffset = 0.0;
         float yOffset = 0.0;
 
-        if (phi <= 90.0 && phi > 0.0) {
-            xOffset = distanceFromBox * cos(phi);
-            yOffset = distanceFromBox * sin(phi);
-        } 
+        // if (phi <= 90.0 && phi > 0.0) {
+        //     xOffset = distanceFromBox * cos(phi);
+        //     yOffset = distanceFromBox * sin(phi);
+        // } 
 
-        else if (phi <= 180.0 && phi > 90.0) {
-            xOffset = distanceFromBox * sin(phi-90.0) * -1.0;
-            yOffset = distanceFromBox * cos(phi-90.0);
-        }
+        // else if (phi <= 180.0 && phi > 90.0) {
+        //     xOffset = distanceFromBox * sin(phi-90.0) * -1.0;
+        //     yOffset = distanceFromBox * cos(phi-90.0);
+        // }
 
-        else if (phi <=270.0 && phi >  180.0) {
-            xOffset = -1.0 * distanceFromBox * cos(phi-180.0);
-            yOffset = -1.0 * distanceFromBox * sin(phi-180.0);
-        }
+        // else if (phi <=270.0 && phi >  180.0) {
+        //     xOffset = -1.0 * distanceFromBox * cos(phi-180.0);
+        //     yOffset = -1.0 * distanceFromBox * sin(phi-180.0);
+        // }
 
-        else {
-            xOffset = distanceFromBox * sin(phi-270.0);
-            yOffset = -1.0 * distanceFromBox * cos(phi-270.0);
-        }  
+        // else {
+        //     xOffset = distanceFromBox * sin(phi-270.0);
+        //     yOffset = -1.0 * distanceFromBox * cos(phi-270.0);
+        // }  
+
+        xOffset = distanceFromBox * cos(phi);
+        yOffset = distanceFromBox * sin(phi);
            
         float xTarget = x + xOffset;
         float yTarget = y + yOffset;
-        float phiTarget = fmod((phi + 180),360) * M_PI / 180.0 ;
+        float phiTarget;
+        if (phi >= 0) phiTarget =(phi - 180)*M_PI / 180.0;
+        if (phi < 0) phiTarget = (phi + 180) * M_PI / 180.0;
 
         std::vector<float> newCoords;
         newCoords.push_back(xTarget);
