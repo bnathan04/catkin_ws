@@ -17,7 +17,23 @@ using namespace std;
 #define IMAGE_TOPIC "camera/rgb/image_raw"
 //camera/rgb/image_raw" // kinect:"camera/rgb/image_raw" webcam:"camera/image"
 
-int compareImages(cv::Mat img_scene, cv::Mat img_object) {
+float computeArea(std::vector<Point2f> scene_corners, cv::Mat img_object) {
+    // Might need additional checks
+    if (scene_corners.size() < 4) return 0.0;
+    auto pointA = scene_corners[0] + Point2f( img_object.cols, 0);
+    auto pointB =  scene_corners[1] + Point2f( img_object.cols, 0);
+    auto pointC = scene_corners[2] + Point2f( img_object.cols, 0);
+    auto pointD = scene_corners[3] + Point2f( img_object.cols, 0);
+
+    float s1 = sqrtf((pointB.x - pointA.x) * (pointB.x - pointA.x) + (pointB.y - pointA.y)*(pointB.y - pointA.y));
+    float s2 = sqrtf((pointC.x - pointB.x) * (pointC.x - pointB.x) + (pointC.y - pointB.y)*(pointC.y - pointB.y));
+
+    float area = s1 * s2; 
+
+    return area;
+}
+
+int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     cout << "Step 0" << std::endl;
     //-- Step 1 & 2: Detect the keypoints and calculate descriptors using SURF Detector
     int minHessian = 400;
@@ -71,8 +87,10 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object) {
     }
 
 
-    if (obj.size() < 4  || scene.size() < 4) return 0;
-    
+    if (obj.size() < 4  || scene.size() < 4) {
+       cout << "WE HERE" << endl;
+        return 0;
+    }
     Mat H = findHomography( obj, scene, RANSAC );
 
     //-- Get the corners from the image_1 ( the object to be "detected" )
@@ -81,6 +99,10 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object) {
     obj_corners[2] = cvPoint( img_object.cols, img_object.rows ); obj_corners[3] = cvPoint( 0, img_object.rows );
     std::vector<Point2f> scene_corners(4);
 
+    cout << "OBJ: " << obj.size() << endl;
+    cout << "SCENE: " << scene.size() << endl;
+
+    if (H.empty()) return 0;
 
     perspectiveTransform( obj_corners, scene_corners, H);
 
@@ -89,6 +111,8 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object) {
     line( img_matches, scene_corners[1] + Point2f( img_object.cols, 0), scene_corners[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
     line( img_matches, scene_corners[2] + Point2f( img_object.cols, 0), scene_corners[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
     line( img_matches, scene_corners[3] + Point2f( img_object.cols, 0), scene_corners[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+
+    area = computeArea(scene_corners, img_object);
 
     //-- Show detected matches
     imshow( "Good Matches & Object detection", img_matches );
@@ -137,20 +161,20 @@ int ImagePipeline::getTemplateID(Boxes& boxes) {
         std::cout << "img.cols:" << img.cols << std::endl;
     } else {
         /***YOUR CODE HERE***/
-
-        int checkImage = compareImages(img, image_array_1); //need to fix this
-        cout << checkImage << endl;
-        if(checkImage > 0){
+        float rectArea = 0.0;
+        int checkImage = compareImages(img, image_array_1, rectArea); //need to fix this
+        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
+        if(rectArea > 10000.0 && rectArea < 20000.0){
             cout << "It's image 1 tho" << std::endl;
         }
-        checkImage = compareImages(img, image_array_2); //need to fix this
-        cout << checkImage << endl;
-        if(checkImage > 0){
+        checkImage = compareImages(img, image_array_2, rectArea); //need to fix this
+        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
+        if(rectArea > 10000.0 && rectArea < 20000.0){
             cout << "It's image 2 tho" << std::endl;
         }
-        checkImage = compareImages(img, image_array_3); //need to fix this
-        cout << checkImage << endl;
-        if(checkImage > 0){
+        checkImage = compareImages(img, image_array_3, rectArea); //need to fix this
+        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
+        if(rectArea > 10000.0 && rectArea < 20000.0){
             cout << "It's image 3 tho" << std::endl;
         }
 
