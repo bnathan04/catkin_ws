@@ -39,7 +39,7 @@ std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std:
 }
 
 /* Params */
-float distanceFromBox = 0.25;
+float distanceFromBox = 0.9;
 
 
 std::vector<std::vector<float>> computeTarget(Boxes boxes) {
@@ -117,7 +117,11 @@ int main(int argc, char** argv) {
     // Initialize image objectand subscriber.
     ImagePipeline imagePipeline(n);
     // Execute strategy.
-    ros::spinOnce();
+
+    while (robotPose.x == 0 && robotPose.y == 0 && robotPose.phi == 0){
+        ros::spinOnce();
+        std::cout <<"Nah"<<std::endl;
+    }
     std::vector<std::vector<float>> targetPoints = computeTarget(boxes);
     std::vector<std::vector<float>> path = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, targetPoints);
     path.push_back({robotPose.x, robotPose.y, robotPose.phi});
