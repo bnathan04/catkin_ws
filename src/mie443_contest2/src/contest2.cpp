@@ -39,7 +39,7 @@ std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std:
 }
 
 /* Params */
-float distanceFromBox = 0.9;
+float distanceFromBox = 0.8;
 
 
 std::vector<std::vector<float>> computeTarget(Boxes boxes) {
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
     std::vector<std::vector<float>> path = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, targetPoints);
     path.push_back({robotPose.x, robotPose.y, robotPose.phi});
     int index = 0;
-    while(ros::ok()) {
+    while(ros::ok() && index < path.size()) {
         ros::spinOnce();
         std::cout<<"Robot Position: " << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
             << robotPose.phi << std::endl;
@@ -135,6 +135,7 @@ int main(int argc, char** argv) {
         // Use: robotPose.x, robotPose.y, robotPose.phi
         std::cout << "Curent Goal:"<<path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
         Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
+        ros::spinOnce();
         imagePipeline.getTemplateID(boxes);
         index++;
         ros::Duration(0.01).sleep();
