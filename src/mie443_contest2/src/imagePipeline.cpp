@@ -25,8 +25,14 @@ float computeArea(std::vector<Point2f> scene_corners, cv::Mat img_object) {
     auto pointC = scene_corners[2] + Point2f( img_object.cols, 0);
     auto pointD = scene_corners[3] + Point2f( img_object.cols, 0);
 
-    float s1 = sqrtf((pointB.x - pointA.x) * (pointB.x - pointA.x) + (pointB.y - pointA.y)*(pointB.y - pointA.y));
-    float s2 = sqrtf((pointC.x - pointB.x) * (pointC.x - pointB.x) + (pointC.y - pointB.y)*(pointC.y - pointB.y));
+    auto xMin = fmin(fmin(pointA.x, pointB.x), fmin(pointC.x, pointD.x));
+    auto yMin = fmin(fmin(pointA.y, pointB.y), fmin(pointC.y, pointD.y));
+    auto xMax = fmax(fmax(pointA.x, pointB.x), fmax(pointC.x, pointD.x));
+    auto yMax = fmax(fmax(pointA.y, pointB.y), fmax(pointC.y, pointD.y));
+
+
+    float s1 = xMax - xMin;
+    float s2 = yMax - yMin;
 
     float area = s1 * s2; 
 
