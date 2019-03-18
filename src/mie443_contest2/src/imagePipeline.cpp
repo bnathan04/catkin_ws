@@ -40,7 +40,6 @@ float computeArea(std::vector<Point2f> scene_corners, cv::Mat img_object) {
 }
 
 int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
-    cout << "Step 0" << std::endl;
     //-- Step 1 & 2: Detect the keypoints and calculate descriptors using SURF Detector
     int minHessian = 400;
     Ptr<SURF> detector = SURF::create(minHessian);
@@ -52,7 +51,7 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     descriptors_scene);
     cout << "Step 1 and 2 Done" << std::endl;
     //-- Step 3: Matching descriptor vectors using FLANN matcher
-    FlannBasedMatcher matcher;
+    BFMatcher matcher;
     std::vector< DMatch > matches;
     matcher.match( descriptors_object, descriptors_scene, matches );
 
@@ -153,9 +152,9 @@ void ImagePipeline::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
 
 int ImagePipeline::getTemplateID(Boxes& boxes) {
 
-    cv::Mat image_array_1 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template1.jpg",IMREAD_GRAYSCALE);
-    cv::Mat image_array_2 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template2.jpg",IMREAD_GRAYSCALE);
-    cv::Mat image_array_3 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template3.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_1 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template1.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_2 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template2.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_3 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template3.jpg",IMREAD_GRAYSCALE);
 
     int template_id = -1;
     if(!isValid) {
@@ -170,17 +169,17 @@ int ImagePipeline::getTemplateID(Boxes& boxes) {
         float rectArea = 0.0;
         int checkImage = compareImages(img, image_array_1, rectArea); //need to fix this
         cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 10000.0 && rectArea < 20000.0){
+        if(rectArea > 5000.0 && rectArea < 20000.0){
             cout << "It's image 1 tho" << std::endl;
         }
         checkImage = compareImages(img, image_array_2, rectArea); //need to fix this
         cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 10000.0 && rectArea < 20000.0){
+        if(rectArea > 5000.0 && rectArea < 20000.0){
             cout << "It's image 2 tho" << std::endl;
         }
         checkImage = compareImages(img, image_array_3, rectArea); //need to fix this
         cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 10000.0 && rectArea < 20000.0){
+        if(rectArea > 5000.0 && rectArea < 20000.0){
             cout << "It's image 3 tho" << std::endl;
         }
 

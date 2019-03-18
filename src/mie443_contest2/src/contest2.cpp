@@ -42,53 +42,35 @@ std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std:
 float distanceFromBox = 0.8;
 
 
-std::vector<std::vector<float>> computeTarget(Boxes boxes) {
+std::vector<std::vector<float>> computeTarget(std::vector<std::vector<float>> boxes) {
 
     std::vector<std::vector<float>> result;
 
-    for(int i = 0; i < boxes.coords.size(); ++i) {
-        float x = boxes.coords[i][0];
-        float y = boxes.coords[i][1];
-        float phi = boxes.coords[i][2];
+    for(int i = 0; i < boxes.size(); ++i) {
+        for (int j = -1; j <= 1; j++){
+            float x = boxes[i][0];
+            float y = boxes[i][1];
+            float phi = boxes[i][2] + (M_PI/6)*j;
 
-        float xOffset = 0.0;
-        float yOffset = 0.0;
+            float xOffset = 0.0;
+            float yOffset = 0.0;
 
-        // if (phi <= 90.0 && phi > 0.0) {
-        //     xOffset = distanceFromBox * cos(phi);
-        //     yOffset = distanceFromBox * sin(phi);
-        // } 
+            xOffset = distanceFromBox * cos(phi);
+            yOffset = distanceFromBox * sin(phi);
+            
+            float xTarget = x + xOffset;
+            float yTarget = y + yOffset;
+            float phiTarget;
+            if (phi >= 0) phiTarget =(phi - M_PI);
+            if (phi < 0) phiTarget = (phi + M_PI);
 
-        // else if (phi <= 180.0 && phi > 90.0) {
-        //     xOffset = distanceFromBox * sin(phi-90.0) * -1.0;
-        //     yOffset = distanceFromBox * cos(phi-90.0);
-        // }
+            std::vector<float> newCoords;
+            newCoords.push_back(xTarget);
+            newCoords.push_back(yTarget);
+            newCoords.push_back(phiTarget);
 
-        // else if (phi <=270.0 && phi >  180.0) {
-        //     xOffset = -1.0 * distanceFromBox * cos(phi-180.0);
-        //     yOffset = -1.0 * distanceFromBox * sin(phi-180.0);
-        // }
-
-        // else {
-        //     xOffset = distanceFromBox * sin(phi-270.0);
-        //     yOffset = -1.0 * distanceFromBox * cos(phi-270.0);
-        // }  
-
-        xOffset = distanceFromBox * cos(phi);
-        yOffset = distanceFromBox * sin(phi);
-           
-        float xTarget = x + xOffset;
-        float yTarget = y + yOffset;
-        float phiTarget;
-        if (phi >= 0) phiTarget =(phi - M_PI);
-        if (phi < 0) phiTarget = (phi + M_PI);
-
-        std::vector<float> newCoords;
-        newCoords.push_back(xTarget);
-        newCoords.push_back(yTarget);
-        newCoords.push_back(phiTarget);
-
-        result.push_back(newCoords);
+            result.push_back(newCoords);
+        }
     }
 
     return result;
@@ -122,8 +104,8 @@ int main(int argc, char** argv) {
         ros::spinOnce();
         std::cout <<"Nah"<<std::endl;
     }
-    std::vector<std::vector<float>> targetPoints = computeTarget(boxes);
-    std::vector<std::vector<float>> path = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, targetPoints);
+    std::vector<std::vector<float>> orderBoxes = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, boxes.coords);
+    std::vector<std::vector<float>> path = computeTarget(orderBoxes);
     path.push_back({robotPose.x, robotPose.y, robotPose.phi});
     int index = 0;
     while(ros::ok() && index < path.size()) {
