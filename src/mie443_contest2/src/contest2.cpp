@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     int index = 0;
     int found[3] = {0};
     std::ofstream f;
-    f.open ("/home/hmnikola/ouputC2.txt");
+    f.open ("/home/turtlebot/ouputC2.txt");
 
     while(ros::ok() && index < path.size()) {
         ros::spinOnce();
@@ -128,6 +128,10 @@ int main(int argc, char** argv) {
         if (match >=0 && match <=2){ //found a good match, skip to next box
             if (found[match] == 1){
                 f << "Found duplicate of picture " << match<<" at location ("<<orderBoxes[index/3][0]<<", "
+                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+            }
+            else if (index%3 == 2){
+                f << "Found blank box at position ("<<orderBoxes[index/3][0]<<", "
                 <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
             }
             else {
