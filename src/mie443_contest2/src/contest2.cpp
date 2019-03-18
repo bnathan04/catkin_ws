@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     int index = 0;
     int found[3] = {0};
     std::ofstream f;
-    f.open ("/home/turtlebot/ouputC2.txt");
+    f.open ("/home/hmnikola/ouputC2.txt");
 
     while(ros::ok() && index < path.size()) {
         ros::spinOnce();
@@ -130,17 +130,19 @@ int main(int argc, char** argv) {
                 f << "Found duplicate of picture " << match<<" at location ("<<orderBoxes[index/3][0]<<", "
                 <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
             }
-            else if (index%3 == 2){
-                f << "Found blank box at position ("<<orderBoxes[index/3][0]<<", "
-                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
-            }
             else {
                 f << "Found picture " << match<<" at location "<<orderBoxes[index/3][0]<<", "
                 <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
             }
             found[match] = 1;
             index += (3 - index%3);
-        } else { //not a great match, try a different angle
+        } else if (index%3 == 2){
+                f << "Found blank box at position ("<<orderBoxes[index/3][0]<<", "
+                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+                index++;
+        }
+        
+        else { //not a great match, try a different angle
             index++;
         }
         ros::Duration(0.01).sleep();
