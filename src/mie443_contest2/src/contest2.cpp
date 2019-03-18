@@ -5,6 +5,8 @@
 #include <limits>
 #include <cmath>
 #include <algorithm> 
+#include <iostream>
+#include <fstream>
 
 double findDistanceOfPath (std::vector<float> origin, std::vector<std::vector<float>> points){
     double distance = 0;
@@ -39,7 +41,7 @@ std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std:
 }
 
 /* Params */
-float distanceFromBox = 0.8;
+float distanceFromBox = 0.65;
 
 
 std::vector<std::vector<float>> computeTarget(std::vector<std::vector<float>> boxes) {
@@ -104,10 +106,14 @@ int main(int argc, char** argv) {
         ros::spinOnce();
         std::cout <<"Nah"<<std::endl;
     }
+    std::vector<float> origin{robotPose.x, robotPose.y, robotPose.phi};
     std::vector<std::vector<float>> orderBoxes = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, boxes.coords);
     std::vector<std::vector<float>> path = computeTarget(orderBoxes);
-    path.push_back({robotPose.x, robotPose.y, robotPose.phi});
     int index = 0;
+    int found[3] = {0};
+    std::ofstream f;
+    f.open ("/home/hmnikola/ouputC2.txt");
+
     while(ros::ok() && index < path.size()) {
         ros::spinOnce();
         std::cout<<"Robot Position: " << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
@@ -118,10 +124,25 @@ int main(int argc, char** argv) {
         std::cout << "Curent Goal:"<<path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
         Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
         ros::spinOnce();
-        imagePipeline.getTemplateID(boxes);
-        index++;
+        int match = imagePipeline.getTemplateID(boxes);
+        if (match >=0 && match <=2){ //found a good match, skip to next box
+            if (found[match] == 1){
+                f << "Found duplicate of picture " << match<<" at location ("<<orderBoxes[index/3][0]<<", "
+                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+            }
+            else {
+                f << "Found picture " << match<<" at location "<<orderBoxes[index/3][0]<<", "
+                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+            }
+            found[match] = 1;
+            index += (3 - index%3);
+        } else { //not a great match, try a different angle
+            index++;
+        }
         ros::Duration(0.01).sleep();
     }
+    Navigation::moveToGoal(origin[0], origin[1], origin[2]);
+
     return 0;
 }
 

@@ -49,14 +49,12 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     descriptors_object);
     detector->detectAndCompute(img_scene, Mat(), keypoints_scene,
     descriptors_scene);
-    cout << "Step 1 and 2 Done" << std::endl;
     //-- Step 3: Matching descriptor vectors using FLANN matcher
     BFMatcher matcher;
     std::vector< DMatch > matches;
     matcher.match( descriptors_object, descriptors_scene, matches );
 
     double max_dist = 0; double min_dist = 100;
-    cout << "Step 3 Done" << std::endl;
     //-- Quick calculation of max and min distances between keypoints
     for( int i = 0; i < descriptors_object.rows; i++ )
     { double dist = matches[i].distance;
@@ -64,9 +62,6 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
         if( dist > max_dist ) max_dist = dist;
     }
 
-    printf("-- Max dist : %f \n", max_dist );
-    printf("-- Min dist : %f \n", min_dist );
-    cout << "Step 4 Done" << std::endl;
     //-- Draw only "good" matches (i.e. whose distance is less than 3*min_dist )
     std::vector< DMatch > good_matches;
 
@@ -83,7 +78,6 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     //-- Localize the object
     std::vector<Point2f> obj;
     std::vector<Point2f> scene;
-    cout << "Step 5 Done" << std::endl;
     for( int i = 0; i < good_matches.size(); i++ )
     {
         //-- Get the keypoints from the good matches
@@ -93,7 +87,6 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
 
 
     if (obj.size() < 4  || scene.size() < 4) {
-       cout << "WE HERE" << endl;
         return 0;
     }
     Mat H = findHomography( obj, scene, RANSAC );
@@ -152,9 +145,9 @@ void ImagePipeline::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
 
 int ImagePipeline::getTemplateID(Boxes& boxes) {
 
-    cv::Mat image_array_1 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template1.jpg",IMREAD_GRAYSCALE);
-    cv::Mat image_array_2 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template2.jpg",IMREAD_GRAYSCALE);
-    cv::Mat image_array_3 = imread("/home/hmnikola/catkin_ws/src/mie443_contest2/boxes_database/template3.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_1 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template1.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_2 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template2.jpg",IMREAD_GRAYSCALE);
+    cv::Mat image_array_3 = imread("/home/turtlebot/catkin_ws/src/mie443_contest2/boxes_database/template3.jpg",IMREAD_GRAYSCALE);
 
     int template_id = -1;
     if(!isValid) {
@@ -171,20 +164,20 @@ int ImagePipeline::getTemplateID(Boxes& boxes) {
         int checkImage = compareImages(img, image_array_1, rectAreas[0]); //need to fix this
         cout << "IMG0-> Matches: " << checkImage << " Area: " << rectAreas[0] << endl;
 
-        int checkImage = compareImages(img, image_array_2, rectAreas[1]);
+        checkImage = compareImages(img, image_array_2, rectAreas[1]);
         cout << "IMG1-> Matches: " << checkImage << " Area: " << rectAreas[1] << endl;
 
-        int checkImage = compareImages(img, image_array_3, rectAreas[2]);
+        checkImage = compareImages(img, image_array_3, rectAreas[2]);
         cout << "IMG2-> Matches: " << checkImage << " Area: " << rectAreas[2] << endl;
 
         int potentialMatch = -1;
         int matchCount = 0;
 
         for (int i = 0; i < rectAreas.size() && matchCount < 2; i++) {
-            if (rectArea[i] > 5000.0 && rectArea[i] < 25000.0) {
+            if (rectAreas[i] > 5000.0 && rectAreas[i] < 25000.0) {
                 cout << "MATCH FOUND: image " << i << std::endl;
                 potentialMatch = i;
-                matchCount++
+                matchCount++;
             }
         }
 
