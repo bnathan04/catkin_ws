@@ -122,7 +122,7 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     //-- Show detected matches
     imshow( "Good Matches & Object detection", img_matches );
 
-    waitKey(0);
+    waitKey(1000);
     return good_matches.size();
 }
 
@@ -166,23 +166,29 @@ int ImagePipeline::getTemplateID(Boxes& boxes) {
         std::cout << "img.cols:" << img.cols << std::endl;
     } else {
         /***YOUR CODE HERE***/
-        float rectArea = 0.0;
-        int checkImage = compareImages(img, image_array_1, rectArea); //need to fix this
-        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 5000.0 && rectArea < 20000.0){
-            cout << "It's image 1 tho" << std::endl;
-        }
-        checkImage = compareImages(img, image_array_2, rectArea); //need to fix this
-        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 5000.0 && rectArea < 20000.0){
-            cout << "It's image 2 tho" << std::endl;
-        }
-        checkImage = compareImages(img, image_array_3, rectArea); //need to fix this
-        cout << "Matches: " << checkImage << " Area: " << rectArea << endl;
-        if(rectArea > 5000.0 && rectArea < 20000.0){
-            cout << "It's image 3 tho" << std::endl;
+        vector<float> rectAreas(3, 0.0);
+        
+        int checkImage = compareImages(img, image_array_1, rectAreas[0]); //need to fix this
+        cout << "IMG0-> Matches: " << checkImage << " Area: " << rectAreas[0] << endl;
+
+        int checkImage = compareImages(img, image_array_2, rectAreas[1]);
+        cout << "IMG1-> Matches: " << checkImage << " Area: " << rectAreas[1] << endl;
+
+        int checkImage = compareImages(img, image_array_3, rectAreas[2]);
+        cout << "IMG2-> Matches: " << checkImage << " Area: " << rectAreas[2] << endl;
+
+        int potentialMatch = -1;
+        int matchCount = 0;
+
+        for (int i = 0; i < rectAreas.size() && matchCount < 2; i++) {
+            if (rectArea[i] > 5000.0 && rectArea[i] < 25000.0) {
+                cout << "MATCH FOUND: image " << i << std::endl;
+                potentialMatch = i;
+                matchCount++
+            }
         }
 
+        template_id = (matchCount == 1 ? potentialMatch : -1);
 
         // Use: boxes.templates 
         cv::imshow("view", img);
