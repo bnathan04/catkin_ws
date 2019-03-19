@@ -25,6 +25,11 @@ float computeArea(std::vector<Point2f> scene_corners, cv::Mat img_object) {
     auto pointC = scene_corners[2] + Point2f( img_object.cols, 0);
     auto pointD = scene_corners[3] + Point2f( img_object.cols, 0);
 
+    cout << pointA.x << " "<<pointA.y<<endl;
+    cout << pointB.x << " "<<pointB.y<<endl;
+    cout << pointC.x << " "<<pointC.y<<endl;
+    cout << pointD.x << " "<<pointD.y<<endl;
+
     auto xMin = fmin(fmin(pointA.x, pointB.x), fmin(pointC.x, pointD.x));
     auto yMin = fmin(fmin(pointA.y, pointB.y), fmin(pointC.y, pointD.y));
     auto xMax = fmax(fmax(pointA.x, pointB.x), fmax(pointC.x, pointD.x));
@@ -34,9 +39,13 @@ float computeArea(std::vector<Point2f> scene_corners, cv::Mat img_object) {
     float s1 = xMax - xMin;
     float s2 = yMax - yMin;
 
-    float area = s1 * s2; 
-
-    return area;
+    float area = s1 * s2;
+    
+    //return positive area it ressembles a rectanle, otherwise return negative and equal area
+    if ((abs(pointA.x - pointD.x) < 50) && (abs(pointB.x - pointC.x) < 50) && (abs(pointA.y - pointB.y) < 50) && (abs(pointC.y - pointD.y) < 50))
+        return area;
+    else
+        return -1*area;
 }
 
 int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
@@ -50,7 +59,7 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     detector->detectAndCompute(img_scene, Mat(), keypoints_scene,
     descriptors_scene);
     //-- Step 3: Matching descriptor vectors using FLANN matcher
-    BFMatcher matcher;
+    FlannBasedMatcher matcher;
     std::vector< DMatch > matches;
     matcher.match( descriptors_object, descriptors_scene, matches );
 
@@ -115,7 +124,7 @@ int compareImages(cv::Mat img_scene, cv::Mat img_object, float& area) {
     //-- Show detected matches
     imshow( "Good Matches & Object detection", img_matches );
 
-    waitKey(1000);
+    waitKey(5000);
     return good_matches.size();
 }
 
@@ -172,16 +181,25 @@ int ImagePipeline::getTemplateID(Boxes& boxes) {
 
         int potentialMatch = -1;
         int matchCount = 0;
+        int definiteNotMatch = 0;
 
         for (int i = 0; i < rectAreas.size() && matchCount < 2; i++) {
-            if (rectAreas[i] > 5000.0 && rectAreas[i] < 25000.0) {
+            //If picture fits within area bounds and is a rectange, a match is found
+            if (abs(rectAreas[i]) > 5000.0 && abs(rectAreas[i]) < 35000.0 && rectAreas[i] > 0) {
                 cout << "MATCH FOUND: image " << i << std::endl;
                 potentialMatch = i;
                 matchCount++;
+            //If picture is far away from the bounds or is not a rectangle, a definite no match is found
+            } else if ((abs(rectAreas[i]) < 1000 || abs(rectAreas[i]) > 40000.0 && rectAreas[i] < 0)) {
+                definiteNotMatch++;
             }
+
         }
 
         template_id = (matchCount == 1 ? potentialMatch : -1);
+
+        //If all 3 angles are definite no matches, signal the controller to label this box blank and continue
+        if (definiteNotMatch == 3) template_id = -2;
 
         // Use: boxes.templates 
         cv::imshow("view", img);

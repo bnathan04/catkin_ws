@@ -40,25 +40,24 @@ std::vector<std::vector<float>> findOptimalPath (std::vector<float> origin, std:
     return optimalPath;
 }
 
-/* Params */
-float distanceFromBox = 0.65;
-
-
-std::vector<std::vector<float>> computeTarget(std::vector<std::vector<float>> boxes) {
+std::vector<std::vector<float>> computeTarget(std::vector<std::vector<float>> boxes, float distanceFromBox) {
 
     std::vector<std::vector<float>> result;
 
     for(int i = 0; i < boxes.size(); ++i) {
-        for (int j = -1; j <= 1; j++){
+        for (int j = 0; j <= 2; j++){
             float x = boxes[i][0];
             float y = boxes[i][1];
-            float phi = boxes[i][2] + (M_PI/6)*j;
+            float phi = boxes[i][2] + (M_PI/9)*j;
+            if (j == 2){ //To Ensure we follow the order of straight on, 20 degrees to the right, 20 degrees to the left
+                phi = boxes[i][2] - (M_PI/9)*j;
+            }
 
             float xOffset = 0.0;
             float yOffset = 0.0;
 
-            xOffset = distanceFromBox * cos(phi);
-            yOffset = distanceFromBox * sin(phi);
+            xOffset = (distanceFromBox) * cos(phi);
+            yOffset = (distanceFromBox) * sin(phi);
             
             float xTarget = x + xOffset;
             float yTarget = y + yOffset;
@@ -106,11 +105,16 @@ int main(int argc, char** argv) {
         ros::spinOnce();
         std::cout <<"Nah"<<std::endl;
     }
+
+    /* Params */
+    float boxDistance = 0.75;
+
     std::vector<float> origin{robotPose.x, robotPose.y, robotPose.phi};
     std::vector<std::vector<float>> orderBoxes = findOptimalPath({robotPose.x, robotPose.y, robotPose.phi}, boxes.coords);
-    std::vector<std::vector<float>> path = computeTarget(orderBoxes);
+    std::vector<std::vector<float>> path = computeTarget(orderBoxes, boxDistance);
     int index = 0;
     int found[3] = {0};
+    bool goalFound = false;
     std::ofstream f;
     f.open ("/home/hmnikola/ouputC2.txt");
 
@@ -118,32 +122,56 @@ int main(int argc, char** argv) {
         ros::spinOnce();
         std::cout<<"Robot Position: " << " x: " << robotPose.x << " y: " << robotPose.y << " z: " 
             << robotPose.phi << std::endl;
-        /***YOUR CODE HERE***/
-        // Use: boxes.coords
-        // Use: robotPose.x, robotPose.y, robotPose.phi
+
         std::cout << "Curent Goal:"<<path[index][0]<< " " <<path[index][1]<< " " <<path[index][2]<<std::endl;
-        Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
+        goalFound = Navigation::moveToGoal(path[index][0], path[index][1], path[index][2]);
         ros::spinOnce();
         int match = imagePipeline.getTemplateID(boxes);
-        if (match >=0 && match <=2){ //found a good match, skip to next box
-            if (found[match] == 1){
-                f << "Found duplicate of picture " << match<<" at location ("<<orderBoxes[index/3][0]<<", "
-                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
-            }
-            else {
-                f << "Found picture " << match<<" at location "<<orderBoxes[index/3][0]<<", "
-                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
-            }
-            found[match] = 1;
-            index += (3 - index%3);
-        } else if (index%3 == 2){
-                f << "Found blank box at position ("<<orderBoxes[index/3][0]<<", "
-                <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
-                index++;
+        std::string boxType = "none";
+
+        switch(match) {
+        case 0 :
+            boxType = "Raisin Bran";
+            break;
+        case 1 :
+            boxType = "Cinnamon Toast Crunch";
+            break;
+        case 2 :
+            boxType = "Rice Krispies";
+            break;
+        default :
+            boxType = "None";
         }
-        
-        else { //not a great match, try a different angle
-            index++;
+
+        if (goalFound){
+            if (match >=0 && match <=2){ //found a good match, record it and skip to next box
+                if (found[match] == 1){//duplicate match found
+                    f << "Found duplicate of "<<boxType<<", (image " << match<<") at location ("<<orderBoxes[index/3][0]<<", "
+                    <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+                }
+                else { //first match of box type found
+                    f << "Found "<<boxType<<", (image " << match<<") at location("<<orderBoxes[index/3][0]<<", "
+                    <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+                }
+                found[match] = 1;
+                index += (3 - index%3);
+            } else if (match == -2 || index%3 == 2){ //A definite blank box or all 3 angles couldn't find a match
+                    f << "Found blank box at position ("<<orderBoxes[index/3][0]<<", "
+                    <<orderBoxes[index/3][1]<<", "<<orderBoxes[index/3][2]<<")"<<std::endl;
+                    index += (3 - index%3);
+            }
+            else { //not a great match but not a definite blank either, try a different angle
+                index++;
+            }
+        } else {
+            std::vector<float> failedBox = {orderBoxes[index/3][0], orderBoxes[index/3][1], orderBoxes[index/3][2]};
+            std::vector<std::vector<float>> failedBoxes;
+            failedBoxes.push_back(failedBox);
+            std::vector<std::vector<float>> newTargets = computeTarget(failedBoxes, boxDistance - 0.10);
+            for (int i = 0; i < newTargets.size(); i++){
+                path.push_back(newTargets[i]);
+            }
+            index += (3 - index%3);
         }
         ros::Duration(0.01).sleep();
     }
