@@ -1,11 +1,12 @@
 #include <header.h>
 #include <ros/package.h>
 #include <imageTransporter.hpp>
+#include <kobuki_msgs/WheelDropEvent.h>
 
 using namespace std;
 
 geometry_msgs::Twist follow_cmd;
-int world_state;
+int world_state = 0;
 
 void followerCB(const geometry_msgs::Twist msg){
     follow_cmd = msg;
@@ -13,6 +14,12 @@ void followerCB(const geometry_msgs::Twist msg){
 
 void bumperCB(const geometry_msgs::Twist msg){
     //Fill with code
+}
+
+void wheelDropCB(const kobuki_msgs::WheelDropEvent msg){
+    if (msg.state == 1) {
+		world_state = 1;
+	}
 }
 
 //-------------------------------------------------------------
@@ -31,12 +38,11 @@ int main(int argc, char **argv)
 	//subscribers
 	ros::Subscriber follower = nh.subscribe("follower_velocity_smoother/smooth_cmd_vel", 10, &followerCB);
 	ros::Subscriber bumper = nh.subscribe("mobile_base/events/bumper", 10, &bumperCB);
+	ros::Subscriber wheelDrop = nh.subscribe("mobile_base/events/wheel_drop", 10, &wheelDropCB);
 
 	imageTransporter rgbTransport("camera/image/", sensor_msgs::image_encodings::BGR8); //--for Webcam
 	//imageTransporter rgbTransport("camera/rgb/image_raw", sensor_msgs::image_encodings::BGR8); //--for turtlebot Camera
 	imageTransporter depthTransport("camera/depth_registered/image_raw", sensor_msgs::image_encodings::TYPE_32FC1);
-
-	int world_state = 0;
 
 	double angular = 0.2;
 	double linear = 0.0;
@@ -60,10 +66,8 @@ int main(int argc, char **argv)
 			vel_pub.publish(follow_cmd);
 
 		}else if(world_state == 1){
-			/*
-			...
-			...
-			*/
+			sc.playWave(path_to_sounds+"sound.wav");
+			ros::Duration(0.5).sleep();
 		}
 	}
 
