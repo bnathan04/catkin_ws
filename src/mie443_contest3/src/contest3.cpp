@@ -17,9 +17,10 @@ void bumperCB(const geometry_msgs::Twist msg){
 }
 
 void wheelDropCB(const kobuki_msgs::WheelDropEvent msg){
+	std::cout<<msg.state<<std::endl;
     if (msg.state == 1) {
 		world_state = 1;
-	} else if (msg.state == 1) {
+	} else if (msg.state == 0) {
 		world_state = 0;
 	}
 
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
 
 		}else if(world_state == 1){
 			sc.playWave(path_to_sounds+"sound.wav");
-			ros::Duration(0.5).sleep();
+			ros::Duration(5).sleep();
 		}
 	}
 
