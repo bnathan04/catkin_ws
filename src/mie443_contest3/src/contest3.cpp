@@ -19,7 +19,11 @@ void bumperCB(const geometry_msgs::Twist msg){
 void wheelDropCB(const kobuki_msgs::WheelDropEvent msg){
     if (msg.state == 1) {
 		world_state = 1;
+	} else if (msg.state == 1) {
+		world_state = 0;
 	}
+
+				
 }
 
 //-------------------------------------------------------------
