@@ -4,60 +4,48 @@
 #include <kobuki_msgs/WheelDropEvent.h>
 #include <sensor_msgs/LaserScan.h>
 #include <kobuki_msgs/BumperEvent.h>
+#include "opencv2/core.hpp"
+#include "opencv2/features2d.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/calib3d.hpp"
+#include "opencv2/xfeatures2d.hpp"
+#include "opencv2/imgproc.hpp"
+
+#include <stdio.h>
+#include <cmath>
+#include <time.h>
 
 using namespace std;
 
-enum Emotion { NEUTRAL, SAD, ANGER};
+enum Emotion { NEUTRAL, SURPRISE, SAD, ANGER, FEAR};
 
 geometry_msgs::Twist follow_cmd;
-int world_state = 0;
+int world_state = 0, prev_world_state = 0;
 double laserLeft = 10, laserCentre = 10, laserRight = 10, laserRange=10;
-int laserSize=0, laserOffset=0, desiredAngle=5;
+int laserSize=0, laserOffset=0, desiredAngle=20;
 double pi = 3.1416;
+time_t startOfEmotion = 0;
 Emotion emotion_state = NEUTRAL;
 
 
 
 string filePath;
 
-
-// void parseEmotion(sound_play::SoundClient sc, Emotion emotion) {
-
-// 	switch (emotion)
-// 	{
-// 		case SAD:
-// 			sc.playWave(filePath+"sound.wav");
-// 			break;
-
-// 		case ANGER:
-// 			sc.playWave(filePath+"sound.wav");
-// 			break;
-
-// 		case NEUTRAL:
-// 			world_state = 0;
-// 			break;
-
-// 		default:
-// 			break;
-// 	}
-
-// 	emotion_state = NEUTRAL;
-// 	ros::Duration(5).sleep();
-
-// }
-
 void followerCB(const geometry_msgs::Twist msg){
     follow_cmd = msg;
+	if (msg.linear.x < 0){
+		emotion_state = FEAR;
+		world_state = 1;
+	} else {
+		world_state = 0;	
+	}
 }
 
 void bumperCB(const kobuki_msgs::BumperEvent msg){
 
 	if (msg.state) {
-		
-		std::cout << "IM CHEESED" << std::endl;
-
 		world_state = 1;
-		emotion_state = ANGER;
+		emotion_state = SURPRISE;
 
 	} else if (!msg.state) {
 
@@ -67,10 +55,9 @@ void bumperCB(const kobuki_msgs::BumperEvent msg){
 }
 
 void wheelDropCB(const kobuki_msgs::WheelDropEvent msg){
-    if (msg.state) {
-		
+    if (msg.state) {	
 		world_state = 1;
-		emotion_state = SAD;
+		emotion_state = ANGER;
 
 	} else if (!msg.state) {
 
@@ -114,12 +101,21 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	if(laserRange == 11)
 		laserRange = 0;
 
-	if(laserCentre > 1)
-		world_state = 2;
+	if(laserCentre > 1){
+		world_state = 1;
+		emotion_state = SAD;
+	}
 	else
 		world_state = 0;
 
 	std::cout<<laserCentre<<std::endl;
+}
+
+void displayImage (string fileName){
+	string path_to_images = ros::package::getPath("mie443_contest3") + "/images/";
+	cv::Mat img = cv::imread(path_to_images + fileName, CV_LOAD_IMAGE_COLOR);
+	cv::imshow("view", img);
+	cv::waitKey(10);
 }
 
 //-------------------------------------------------------------
@@ -166,23 +162,49 @@ int main(int argc, char **argv)
 			//fill with your code
 			//vel_pub.publish(vel);
 			vel_pub.publish(follow_cmd);
+			displayImage("neutral.png");
+			prev_world_state = 0;
 
 		}else if(world_state == 1){ // sensor stimuli 
+			if (prev_world_state == 0){
+				startOfEmotion = time(NULL);
+				prev_world_state = 1;
+			}
+			uint64_t secondsElapsed = difftime(time(NULL),startOfEmotion);
 
 			switch (emotion_state)
 			{
-				case SAD:
-					sc.playWave(path_to_sounds+"sound.wav");
+				case NEUTRAL:
+					world_state = 0;
+					break;
+
+				case SURPRISE:
+					sc.playWave(path_to_sounds+"surprise.wav");
 					ros::Duration(5).sleep();
+					break;
+				case SAD:
+					if (secondsElapsed < 5){
+						sc.playWave(path_to_sounds+"sad1.wav");
+						ros::Duration(5).sleep();
+					} else {
+						sc.playWave(path_to_sounds+"sad2.wav");
+						ros::Duration(5).sleep();						
+					}
 					break;
 
 				case ANGER:
-					sc.playWave(path_to_sounds+"sound.wav");
-					ros::Duration(5).sleep();
+					if (secondsElapsed < 5){
+						sc.playWave(path_to_sounds+"angry1.wav");
+						ros::Duration(5).sleep();
+					} else {
+						sc.playWave(path_to_sounds+"angry2.wav");
+						ros::Duration(5).sleep();						
+					}
 					break;
-
-				case NEUTRAL:
-					world_state = 0;
+				
+				case FEAR:
+				    sc.playWave(path_to_sounds+"fear.wav");
+					ros::Duration(5).sleep();
 					break;
 
 				default:
@@ -190,15 +212,7 @@ int main(int argc, char **argv)
 			}
 
 			emotion_state = NEUTRAL;
-			
-
-		} else if(world_state == 2){// I lost my follower
-			
-			sc.playWave(path_to_sounds+"sound.wav");
-			ros::Duration(5).sleep();
-			
-		}
-
+		} 
 	}
 
 	return 0;
