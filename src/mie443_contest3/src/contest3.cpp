@@ -214,8 +214,15 @@ int main(int argc, char **argv)
 				
 				case FEAR:
 					displayImage("fear.jpg");
+					vel.angular.z = 0.0;
+  					vel.linear.x = -0.5;
+  					vel_pub.publish(vel);
+					ros::spinOnce();
 				    sc.playWave(path_to_sounds+"fear.wav");
 					ros::Duration(5).sleep();
+					vel.linear.x = 0;
+  					vel_pub.publish(vel);
+					ros::spinOnce();
 					world_state = 0;
 					break;
 
