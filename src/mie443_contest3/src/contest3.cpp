@@ -33,21 +33,21 @@ string filePath;
 
 void followerCB(const geometry_msgs::Twist msg){
     follow_cmd = msg;
-	if (msg.linear.x < 0){
+	if (msg.linear.x < -0.3 && world_state == 0){
 		emotion_state = FEAR;
 		world_state = 1;
-	} else {
+	} else if (world_state == 1 && emotion_state == FEAR){
 		world_state = 0;	
 	}
 }
 
 void bumperCB(const kobuki_msgs::BumperEvent msg){
 
-	if (msg.state) {
+	if (msg.state && world_state == 0) {
 		world_state = 1;
 		emotion_state = SURPRISE;
 
-	} else if (!msg.state) {
+	} else if (!msg.state && emotion_state == SURPRISE) {
 
 		world_state = 0;
 
@@ -55,7 +55,7 @@ void bumperCB(const kobuki_msgs::BumperEvent msg){
 }
 
 void wheelDropCB(const kobuki_msgs::WheelDropEvent msg){
-    if (msg.state) {	
+    if (msg.state  && world_state == 0) {	
 		world_state = 1;
 		emotion_state = ANGER;
 
@@ -101,13 +101,13 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	if(laserRange == 11)
 		laserRange = 0;
 
-	if(laserCentre > 1){
+	if(laserCentre > 1.5 && laserCentre != 999.9 && world_state == 0){
 		world_state = 1;
 		emotion_state = SAD;
 	}
-	else
+	else if (emotion_state == SAD){
 		world_state = 0;
-
+	}
 	std::cout<<laserCentre<<std::endl;
 }
 
@@ -165,13 +165,18 @@ int main(int argc, char **argv)
 			displayImage("neutral.png");
 			prev_world_state = 0;
 
-		}else if(world_state == 1){ // sensor stimuli 
+		}else if(world_state == 1){ // sensor stimuli
+
+			std::cout << "CURRENT START OF EMOTION: " << startOfEmotion << std::endl;
+
 			if (prev_world_state == 0){
 				startOfEmotion = time(NULL);
+				//std::cout << "NEW START OF EMOTION: " << startOfEmotion << std::endl;
 				prev_world_state = 1;
 			}
-			uint64_t secondsElapsed = difftime(time(NULL),startOfEmotion);
-
+			double secondsElapsed = difftime(time(NULL),startOfEmotion);
+			//std::cout << emotion_state << std::endl;
+			//std::cout << "SECONDS ELAPSED: " << secondsElapsed << std::endl;
 			switch (emotion_state)
 			{
 				case NEUTRAL:
@@ -179,14 +184,17 @@ int main(int argc, char **argv)
 					break;
 
 				case SURPRISE:
+					displayImage("surprise.png");
 					sc.playWave(path_to_sounds+"surprise.wav");
 					ros::Duration(5).sleep();
 					break;
 				case SAD:
 					if (secondsElapsed < 5){
+						displayImage("sad.png");
 						sc.playWave(path_to_sounds+"sad1.wav");
 						ros::Duration(5).sleep();
 					} else {
+						displayImage("sad.png");
 						sc.playWave(path_to_sounds+"sad2.wav");
 						ros::Duration(5).sleep();						
 					}
@@ -194,24 +202,26 @@ int main(int argc, char **argv)
 
 				case ANGER:
 					if (secondsElapsed < 5){
+						displayImage("angry1.png");
 						sc.playWave(path_to_sounds+"angry1.wav");
 						ros::Duration(5).sleep();
 					} else {
+						displayImage("angry3.png");
 						sc.playWave(path_to_sounds+"angry2.wav");
 						ros::Duration(5).sleep();						
 					}
 					break;
 				
 				case FEAR:
+					displayImage("fear.jpg");
 				    sc.playWave(path_to_sounds+"fear.wav");
 					ros::Duration(5).sleep();
+					world_state = 0;
 					break;
 
 				default:
 					break;
 			}
-
-			emotion_state = NEUTRAL;
 		} 
 	}
 
