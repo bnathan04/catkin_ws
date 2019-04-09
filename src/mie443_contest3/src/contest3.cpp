@@ -149,8 +149,6 @@ int main(int argc, char **argv)
 	vel.angular.z = angular;
 	vel.linear.x = linear;
 
-	sc.playWave(path_to_sounds + "sound.wav");
-	ros::Duration(0.5).sleep();
 
 	while(ros::ok()){
 		ros::spinOnce();
@@ -190,11 +188,11 @@ int main(int argc, char **argv)
 					break;
 				case SAD:
 					if (secondsElapsed < 5){
-						displayImage("sad.png");
+						displayImage("sad1.png");
 						sc.playWave(path_to_sounds+"sad1.wav");
 						ros::Duration(5).sleep();
 					} else {
-						displayImage("sad.png");
+						displayImage("sad2.png");
 						sc.playWave(path_to_sounds+"sad2.wav");
 						ros::Duration(5).sleep();						
 					}
@@ -206,14 +204,14 @@ int main(int argc, char **argv)
 						sc.playWave(path_to_sounds+"angry1.wav");
 						ros::Duration(5).sleep();
 					} else {
-						displayImage("angry3.png");
+						displayImage("angry2.png");
 						sc.playWave(path_to_sounds+"angry2.wav");
 						ros::Duration(5).sleep();						
 					}
 					break;
 				
 				case FEAR:
-					displayImage("fear.jpg");
+					displayImage("fear.png");
 					vel.angular.z = 0.0;
   					vel.linear.x = -0.5;
   					vel_pub.publish(vel);
