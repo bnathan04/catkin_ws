@@ -33,7 +33,7 @@ string filePath;
 
 void followerCB(const geometry_msgs::Twist msg){
     follow_cmd = msg;
-	if (msg.linear.x < -0.3 && world_state == 0){
+	if (msg.linear.x < -0.2 && world_state == 0){
 		emotion_state = FEAR;
 		world_state = 1;
 	} else if (world_state == 1 && emotion_state == FEAR){
