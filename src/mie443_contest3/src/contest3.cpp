@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 				case SURPRISE:
 					displayImage("surprise.png");
 					sc.playWave(path_to_sounds+"surprise.wav");
-					ros::Duration(5).sleep();
+					ros::Duration(4).sleep();
 					break;
 				case SAD:
 					if (secondsElapsed < 5){
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
   					vel_pub.publish(vel);
 					ros::spinOnce();
 				    sc.playWave(path_to_sounds+"fear.wav");
-					ros::Duration(5).sleep();
+					ros::Duration(4).sleep();
 					vel.linear.x = 0;
   					vel_pub.publish(vel);
 					ros::spinOnce();
